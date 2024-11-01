@@ -138,7 +138,3 @@ the graph above shows that what we predicted is most likely going to happen. whe
 tidyverse was used to handle the data using dplyr and tibble (these packages are included in tidyverse). these help in creating and manipulating data frames like LV. it also uses tidyr for data cleaning to be used with ggplot2. ggplot2 was used for data visualisation of the deterministic version and the stochastic version of the rabbits and foxes populations.
 
 
-# References
-Jewell.C. (2024) Chapter 1: Data manipulation and plotting. SCC.461: Programming for Data Scientists. 14 October 2024, Lancaster University
-
-Jewell.C. (2024) Chapter 3: Loops, Conditional Statements, and Simulation. SCC.461: Programming for Data Scientists. 21 October 2024, Lancaster University
