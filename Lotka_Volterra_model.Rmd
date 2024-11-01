@@ -1,0 +1,144 @@
+---
+title: "Lotka-Volterra model"
+author: 'Miriam'
+date: "2024-10-25"
+output: pdf_document
+---
+
+This project focuses on the implementation of the Lotka-Volterra model and is specifically applied to foxes and rabbits.
+
+```{r load the nescesiary library, include=TRUE}
+library(tidyverse) # helps with data manipulation and cleaning
+library(ggplot2) # helps with visualising the data 
+```
+
+alpha, beta and gamma are the 3 processes the models are governed by. these are set in the global environment as these values are a constant for this project.
+
+```{r the three processes that the model is governed by, include=TRUE}
+alpha <- 0.05 # this represents the birth rate of rabbits in a population
+beta <- 1.2*10^-4 #this represents the rate of rabbits consumed by the foxes
+gamma <- 0.04 # this represents the death of foxes
+```
+
+## Task 1
+
+this states the initial population for rabbits(R) and and foxes(f). the project asks to calculate the number of foxes and rabbits at the end of 2 years (after 103 weeks)
+
+```{r initial population of foxes and rabbits and the weeks, include=TRUE}
+R <- 60 #Rabbits
+f <- 30 #foxes
+weeks <- 104 #(103+the initial week)
+```
+
+this is the population function with the parameters R, f, and weeks and uses a for loop to repeatedly execute this function till the 104th iteration for both R and f. This will project the number of foxes and rabbits till the end of the 2-year (103-week) period. t is he object storing our index
+
+```{r diterministic version for the population function, include=TRUE}
+population <- function (R = 60, f = 30, weeks = 104){
+# the Lotka-Volterra deterministic model
+   for (t in 1:(weeks - 1)) {
+     # calculates the prey (rabbit) population for the next week
+    R[t +1] = (R[t]) + ( alpha * R[t]) - (beta * R[t] * f[t]) 
+    # calculates the predator (foxes) population for the next week
+    f[t+1] = (f[t]) + (beta * R[t] * f[t]) - (gamma * f[t]) 
+  }
+  return(list(R, f)) 
+  # returns the values as a list. the list assigns values in [[]] to the elements 
+  # R being the first one and f being the second
+}
+deterministic <- population() # runs population function and stores it in deterministic
+
+```
+
+this chunk will print out the last few values of the rabbit and foxes deterministic population after the 2 year period.
+
+```{r tail of R and f in the determinstic version, include=TRUE}
+print("the last few values of rabbits after a 2 year period in the determinstic model: ")
+tail(deterministic[[1]])
+print("the last few values of foxes after a 2 year period in the determinstic model: ")
+tail(deterministic[[2]])
+```
+
+## Task 2
+
+this tasks to get the stochastic version of the population growth model. the parameters of the model and function are the same as the deterministic version
+
+```{r stocastic version for the population funtion, include=TRUE}
+set.seed(17540) #this helps others rerun the code and give the same values making the code reproducible
+
+# the initial values are the same as the ones used in the deterministic model
+stochastic_population <- function(initial_R = 60, initial_f = 30, weeks = 104) {
+  
+  R2 = numeric(weeks) # rabbit population over time (in weeks)
+  f2 = numeric(weeks) # foxes population over time (in weeks)
+  R2[1] = initial_R
+  f2[1] = initial_f
+  
+  for (t in 1:(weeks - 1)) {
+    # Stochastic processes
+    rabbit_born = rbinom(1, size = R2[t], prob = alpha)
+    rabbit_eaten = rbinom(1, size = R2[t] * f2[t], prob = beta)
+    foxes_dead = rbinom(1, size = f2[t], prob = gamma)
+#update rabbit population for the next week:
+    R2[t + 1] = max(R2[t] + rabbit_born - rabbit_eaten, 0) 
+#update foxes population for the next week:
+    f2[t + 1] = max(f2[t] + rabbit_eaten - foxes_dead, 0) 
+  }
+  return(list(R2, f2))
+  # returns the values as a list. the list assigns values in [[]] to the elements 
+  # R2 being the first one and f2 being the second
+}
+#runs stochastic_population and stores it in stochastic
+stochastic <- stochastic_population() 
+
+```
+
+this chunk will print out the last few values of the rabbit and foxes stochastic population after the 2 year period.
+
+```{r tail of R2 and f2 in the stochastic version, include=TRUE}
+print("the last few values of rabbits after a 2 year period in the stochastic model: ")
+tail(stochastic[[1]])
+print("the last few values of foxes after a 2 year period in the stochastic model: ")
+tail(stochastic[[2]])
+```
+
+## Task 3
+
+this task asks to visualise the data from the deterministic model. there are 4 lines (rabbits and foxes from deterministic and stochastic). looking at just the relationship of rabbits and foxes, it is expected that the number of foxes in the population will decrease as soon as rabbits decrease as the foxes lose their food source. this also works the other way around (as rabbits increases, foxes also increases). this model will be different if more than one prey/food source is present for the foxes.
+
+```{r dataframe made of 3 variables }
+
+LV <- data.frame(
+  #time: creates a repeated sequence from 1 to 104 and does so 4 times
+  time = rep(1: weeks, 4), 
+  #group: creates a repeated group of labels R, f, sto_rabbits, and sto_foxes
+  #and each label is repeated 104 times
+  group = rep(c("R", "f", "sto_rabbits", "sto_foxes"), each = weeks),
+  #combines the data from the deterministic and stochastic models into a single  
+  #vector. this will be ideal for plotting later.
+  size = c(deterministic[[1]], deterministic[[2]], stochastic[[1]], stochastic[[2]]) 
+)
+```
+
+this chunk actually plots the data. time is the independent variable as it doesn't depend on anything. size is the dependent variable as the populations of foxes and rabbits depend on each othere.
+
+```{r poltting LV, include=TRUE}
+#initialises ggplot for the LV dataframe. 'x' plots the time, 'y' plots the size
+#and 'color' colours each of the 4 lines a different colour. 
+ggplot(LV, aes(x = time, y = size, color = group)) +
+  #adds a separate line plot for each of the groups and is plotted over time
+  geom_line() +
+  #labels the graph appropriately
+  labs(title = "Lotka-Volterra Model for Rabbits and Foxes",
+       x = "Time (Weeks)",
+       y = "Population Size")
+```
+
+the graph above shows that what we predicted is most likely going to happen. when rabbits decrease, the foxes decrease shortly after.
+
+tidyverse was used to handle the data using dplyr and tibble (these packages are included in tidyverse). these help in creating and manipulating data frames like LV. it also uses tidyr for data cleaning to be used with ggplot2. ggplot2 was used for data visualisation of the deterministic version and the stochastic version of the rabbits and foxes populations.
+
+
+# References
+Jewell.C. (2024) Chapter 1: Data manipulation and plotting. SCC.461: Programming for Data Scientists. 14 October 2024, Lancaster University
+
+Jewell.C. (2024) Chapter 3: Loops, Conditional Statements, and Simulation. SCC.461: Programming for Data Scientists. 21 October 2024, Lancaster University
